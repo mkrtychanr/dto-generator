@@ -260,10 +260,7 @@ func generateHandlers(doc *openapi3.T, modulePath, outputDir string) error {
 				buf.WriteString("}{}\n\n")
 			}
 			buf.WriteString(fmt.Sprintf("func (a *API) %s(ctx *fasthttp.RequestCtx) {\n", handlerName))
-			buf.WriteString("\tctx.SetContentType(\"application/json\")\n")
-			buf.WriteString("\t// TODO: implement handler logic\n")
-			buf.WriteString("\tctx.SetStatusCode(fasthttp.StatusNotImplemented)\n")
-			buf.WriteString("\tctx.SetBodyString(\"not implemented\")\n")
+			buf.WriteString("\t// TODO: implementation\n")
 			buf.WriteString("}\n\n")
 
 			formatted, err := format.Source(buf.Bytes())
