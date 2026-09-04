@@ -167,6 +167,13 @@ func generateDTOs(doc *openapi3.T, outputDir string) error {
 		if ref == nil {
 			continue
 		}
+		if ref.Ref != "" {
+			targetName := sanitizeTypeName(schemaRefName(ref.Ref))
+			if targetName != goName {
+				buf.WriteString(fmt.Sprintf("type %s = %s\n\n", goName, targetName))
+				continue
+			}
+		}
 		schema := resolveSchemaRef(ref, doc.Components.Schemas)
 		if schema == nil {
 			continue
@@ -473,6 +480,9 @@ func pathToFuncName(p string) string {
 }
 
 func resolveSchemaToGoType(ref *openapi3.SchemaRef, propName string, schemas openapi3.Schemas) string {
+	if ref != nil && ref.Ref != "" {
+		return sanitizeTypeName(schemaRefName(ref.Ref))
+	}
 	schema := resolveSchemaRef(ref, schemas)
 	if schema == nil {
 		return "interface{}"
