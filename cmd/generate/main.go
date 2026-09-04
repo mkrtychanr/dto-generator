@@ -167,31 +167,29 @@ func generateDTOs(doc *openapi3.T, outputDir string) error {
 		if ref == nil {
 			continue
 		}
-		if ref.Value == nil {
-			if ref.Ref != "" {
-				buf.WriteString(fmt.Sprintf("type %s = %s\n\n", goName, sanitizeTypeName(schemaRefName(ref.Ref))))
-			}
+		schema := resolveSchemaRef(ref, doc.Components.Schemas)
+		if schema == nil {
 			continue
 		}
-		if ref.Value.Type != nil && (ref.Value.Type.Is("object") || len(ref.Value.Properties) > 0) {
+		if schema.Type != nil && (schema.Type.Is("object") || len(schema.Properties) > 0) {
 			buf.WriteString("type " + goName + " struct {\n")
 			// properties
-			props := make([]string, 0, len(ref.Value.Properties))
-			for p := range ref.Value.Properties {
+			props := make([]string, 0, len(schema.Properties))
+			for p := range schema.Properties {
 				props = append(props, p)
 			}
 			sort.Strings(props)
 			for _, p := range props {
-				sref := ref.Value.Properties[p]
+				sref := schema.Properties[p]
 				fieldName := sanitizeFieldName(p)
-				fieldType := resolveSchemaToGoType(sref, p)
+				fieldType := resolveSchemaToGoType(sref, p, doc.Components.Schemas)
 				tag := fmt.Sprintf("`json:\"%s,omitempty\"`", p)
 				buf.WriteString(fmt.Sprintf("\t%s %s %s\n", fieldName, fieldType, tag))
 			}
 			buf.WriteString("}\n\n")
 		} else {
 			// simple alias
-			t := simpleType(ref.Value)
+			t := resolveSchemaToGoType(ref, name, doc.Components.Schemas)
 			buf.WriteString(fmt.Sprintf("type %s %s\n\n", goName, t))
 		}
 	}
@@ -474,33 +472,51 @@ func pathToFuncName(p string) string {
 	return out
 }
 
-func resolveSchemaToGoType(ref *openapi3.SchemaRef, propName string) string {
-	if ref == nil || ref.Value == nil {
+func resolveSchemaToGoType(ref *openapi3.SchemaRef, propName string, schemas openapi3.Schemas) string {
+	schema := resolveSchemaRef(ref, schemas)
+	if schema == nil {
 		return "interface{}"
 	}
-	if ref.Value.Type != nil && ref.Value.Type.Is("array") {
-		if ref.Value.Items != nil {
-			return "[]" + resolveSchemaToGoType(ref.Value.Items, propName)
+	if schema.Type != nil && schema.Type.Is("array") {
+		if schema.Items != nil {
+			return "[]" + resolveSchemaToGoType(schema.Items, propName, schemas)
 		}
 		return "[]interface{}"
 	}
-	if ref.Value.Type != nil && ref.Value.Type.Is("object") {
+	if schema.Type != nil && schema.Type.Is("object") {
 		// anonymous struct
 		var b strings.Builder
 		b.WriteString("struct {\n")
-		props := make([]string, 0, len(ref.Value.Properties))
-		for p := range ref.Value.Properties {
+		props := make([]string, 0, len(schema.Properties))
+		for p := range schema.Properties {
 			props = append(props, p)
 		}
 		sort.Strings(props)
 		for _, p := range props {
-			f := ref.Value.Properties[p]
-			b.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n", sanitizeFieldName(p), resolveSchemaToGoType(f, p), p))
+			f := schema.Properties[p]
+			b.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n", sanitizeFieldName(p), resolveSchemaToGoType(f, p, schemas), p))
 		}
 		b.WriteString("}")
 		return b.String()
 	}
-	return simpleType(ref.Value)
+	return simpleType(schema)
+}
+
+func resolveSchemaRef(ref *openapi3.SchemaRef, schemas openapi3.Schemas) *openapi3.Schema {
+	if ref == nil {
+		return nil
+	}
+	if ref.Value != nil {
+		return ref.Value
+	}
+	if ref.Ref == "" {
+		return nil
+	}
+	component, ok := schemas[schemaRefName(ref.Ref)]
+	if !ok || component == ref {
+		return nil
+	}
+	return resolveSchemaRef(component, schemas)
 }
 
 func simpleType(s *openapi3.Schema) string {
