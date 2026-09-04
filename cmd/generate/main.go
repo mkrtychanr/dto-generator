@@ -199,9 +199,9 @@ func generateDTOs(doc *openapi3.T, outputDir string) error {
 	formatted, err := format.Source(buf.Bytes())
 	if err != nil {
 		// write unformatted for debugging
-		return ioutil.WriteFile(filepath.Join(outputDir, "types_generated.go"), buf.Bytes(), 0644)
+		return ioutil.WriteFile(filepath.Join(outputDir, "dto.go"), buf.Bytes(), 0644)
 	}
-	return ioutil.WriteFile(filepath.Join(outputDir, "types_generated.go"), formatted, 0644)
+	return ioutil.WriteFile(filepath.Join(outputDir, "dto.go"), formatted, 0644)
 }
 
 func generateHandlers(doc *openapi3.T, modulePath, outputDir string) error {

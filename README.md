@@ -3,7 +3,7 @@
 The generator reads an OpenAPI or Swagger schema supplied by a consumer project
 and creates:
 
-- DTO types in `internal/dto/types_generated.go`;
+- DTO types in `internal/dto/dto.go`;
 - REST handler skeletons in `internal/api/rest/handlers_generated.go`;
 - Swagger JSON and a Swagger UI entry point in `docs/swagger/`.
 
