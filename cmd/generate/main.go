@@ -273,6 +273,11 @@ func generateHandlers(doc *openapi3.T, modulePath, outputDir string) error {
 				return fmt.Errorf("format handler %s: %w", handlerName, err)
 			}
 			filename := filepath.Join(outputDir, snakeCase(handlerName)+".go")
+			if _, err := os.Stat(filename); err == nil {
+				continue
+			} else if !os.IsNotExist(err) {
+				return fmt.Errorf("check handler %s: %w", handlerName, err)
+			}
 			if err := ioutil.WriteFile(filename, formatted, 0644); err != nil {
 				return fmt.Errorf("write handler %s: %w", handlerName, err)
 			}
