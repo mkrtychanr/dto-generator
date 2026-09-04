@@ -257,10 +257,10 @@ func generateHandlers(doc *openapi3.T, modulePath, outputDir string) error {
 			if requestSchema != nil || headerSchema != nil {
 				buf.WriteString("var _ = struct {\n")
 				if headerSchema != nil {
-					buf.WriteString(fmt.Sprintf("\tHeaders dto.%sRequestHeaders\n", sanitizeTypeName(baseName)))
+					buf.WriteString(fmt.Sprintf("\theaders dto.%sRequestHeaders\n", sanitizeTypeName(baseName)))
 				}
 				if requestSchema != nil {
-					buf.WriteString(fmt.Sprintf("\tBody dto.%sRequestBody\n", sanitizeTypeName(baseName)))
+					buf.WriteString(fmt.Sprintf("\tbody dto.%sRequestBody\n", sanitizeTypeName(baseName)))
 				}
 				buf.WriteString("}{}\n\n")
 			}
